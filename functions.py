@@ -40,7 +40,6 @@ def currencies(file_path):
 
 # 1. Function prints results of the currencies used
 def print_currency(currencies_used):
-    print("Part 1")
     print("These currencies were used:", currencies_used)
 
 def process_csv(file_path):
@@ -131,7 +130,7 @@ def cal_expenses_by_month(file_path):
 
 # 4. Function prints result of total expenses by month
 def print_expenses_by_month(outcome_by_month):
-#    print(f"Expenses by month: {outcome_by_month}")
+    print(f"Total expenses by month:")
     for month, total_outcome in outcome_by_month.items():
         print(f"{month}: {total_outcome}")
 
@@ -155,7 +154,7 @@ def cal_income_by_month(file_path):
 
 # 5. Function prints result of total income by month
 def print_income_by_month(income_by_month):
-#    print(f"Income by month: {income_by_month}")
+    print(f"Total income by month:")
     for month, total_income in income_by_month.items():
         print(f"{month}: {total_income}")
 
@@ -194,7 +193,7 @@ def cal_balance_by_month(file_path):
 
 # 6. Function prints result of account balance in the end of each month
 def print_balance_by_month(balance_by_month):
-#    print(f"Balance in the end of each month: {balance_by_month}")
+    print(f"Balance in the end of each month (currencies are ignored):")
     for month, balance in balance_by_month.items():
         print(f"Month {month}: {balance}")
 
@@ -224,37 +223,112 @@ def calc_monthly_balance_by_currency(file_path):
 
 # 7. Function prints result of account balance in the end of each month
 def print_monthly_balance(bal_by_month_and_currency):
-# result = calc_monthly_balance_by_currency(file_path)
+    print("Balance in the end of each month by currency:")
     for month, balances in bal_by_month_and_currency.items():
         print(f"Month {month}:")
         for currency, balance in balances.items():
-            print(f"Currency {currency}: {balance}")
+            print(f"Currency {currency}: {balance:.2f}")
 
-# 8. Function calculates the percentage expression of income and outcome by month
+# 8. Function calculates income and outcome by month and currency
+
+def calc_income_outcome_month_currency(file_path):
+    income_by_month_currency = {}
+    outcome_by_month_currency = {}
+
+    with open(file_path, 'r', encoding='utf-8') as csvfile:
+        csv_reader = csv.DictReader(csvfile)
+
+        for row in csv_reader:
+            date = row['Data']
+            month = date.split('-')[1]
+            currency = row['Valiuta']
+            amount = float(row['Suma'])
+
+            if row['D/K'] == 'K':
+                if (month, currency) in income_by_month_currency:
+                    income_by_month_currency[(month, currency)] += amount
+                else:
+                    income_by_month_currency[(month, currency)] = amount
+            elif row['D/K'] == 'D':
+                if (month, currency) in outcome_by_month_currency:
+                    outcome_by_month_currency[(month, currency)] += amount
+                else:
+                    outcome_by_month_currency[(month, currency)] = amount
+    return income_by_month_currency, outcome_by_month_currency
+
+# Function calculates the percentage expression of income and outcome by month and currency
+
 def calc_percentage_income_outcome(file_path):
-    income_by_month = cal_income_by_month(file_path)
-    expenses_by_month = cal_expenses_by_month(file_path)
-    total_income = sum(income_by_month.values())
-    total_expenses = sum(expenses_by_month.values())
+    income_by_month_currency, outcome_by_month_currency = calc_income_outcome_month_currency(file_path)
+    total_income_by_month = {}
+    total_outcome_by_month = {}
+    percent_inc_out_month_curr = {}
 
-    percent_inc_out_month = {}
+    for month_currency, income in income_by_month_currency.items():
+        month, currency = month_currency
+        total_income_by_month[month] = total_income_by_month.get(month, 0) + income
 
-    for month, income in income_by_month.items():
-        expense = expenses_by_month.get(month, 0)
-        if total_income > 0:
-            income_percent = (income / total_income) * 100
-        else:
-            income_percent = 0
-        if total_expenses > 0:
-            expense_percent = (expense / total_expenses)
-        else:
-            expense_percent = 0
-        percent_inc_out_month[month] = {'Income': income_percent, 'Expenses': expense_percent}
-    return percent_inc_out_month
+    for month_currency, outcome in outcome_by_month_currency.items():
+        month, currency = month_currency
+        total_outcome_by_month[month] = total_outcome_by_month.get(month, 0) + outcome
+
+    for month_currency, income in income_by_month_currency.items():
+        month, currency = month_currency
+        outcome = outcome_by_month_currency.get(month_currency, 0)
+
+        total_income = total_income_by_month.get(month, 0)
+        total_outcome = total_outcome_by_month.get(month, 0)
+
+        income_percent = (income / total_income) * 100 if total_income > 0 else 0
+        outcome_percent = (outcome / total_outcome) * 100 if total_outcome > 0 else 0
+
+        # if total_income > 0:
+        #     income_percent = (income / total_income) * 100
+        # else:
+        #     0
+        # if total_outcome > 0:
+        #     outcome_percent = (outcome / total_outcome) * 100
+        # else:
+        #     0
+        if month not in percent_inc_out_month_curr:
+            percent_inc_out_month_curr[month] = {}
+
+        percent_inc_out_month_curr[month][currency] = {'Income': income_percent, 'Outcome': outcome_percent}
+
+    return percent_inc_out_month_curr
+
+# Function prints the result of percentage expression of income and outcome by month and currency
+def print_percentage_income_outcome(percent_inc_out_month_curr):
+    print("Percentage value of income and outcome by month and currency:")
+    for month, currencies in percent_inc_out_month_curr.items():
+        print(f"Month {month}:")
+        for currency, percentages in currencies.items():
+            print(f"Currency {currency}: Income: {percentages['Income']:.2f}%, Outcome: {percentages['Outcome']:.2f}%")
+
+# def calc_percentage_income_outcome(file_path):
+#     income_by_month = cal_income_by_month(file_path)
+#     expenses_by_month = cal_expenses_by_month(file_path)
+#     total_income = sum(income_by_month.values())
+#     total_expenses = sum(expenses_by_month.values())
+#
+#     percent_inc_out_month = {}
+#
+#     for month, income in income_by_month.items():
+#         expense = expenses_by_month.get(month, 0)
+#         if total_income > 0:
+#             income_percent = (income / total_income) * 100
+#         else:
+#             income_percent = 0
+#         if total_expenses > 0:
+#             expense_percent = (expense / total_expenses)
+#         else:
+#             expense_percent = 0
+#         percent_inc_out_month[month] = {'Income': income_percent, 'Expenses': expense_percent}
+#     return percent_inc_out_month
 
 # Function prints the result of percentage expression of income and outcome by month
-def print_percentage_income_outcome(percent_inc_out_month):
-    print("Percentage value of income and outcome by month:")
-    for month, percentages in percent_inc_out_month.items():
-        print(f"Month {month}: Income: {percentages['Income']:.2f}%, Expenses: {percentages['Expenses']:.2f}%")
+# def print_percentage_income_outcome(percent_inc_out_month):
+#     print("Percentage value of income and outcome by month and currency:")
+#     for month, percentages in percent_inc_out_month.items():
+#         print(f"Month {month}: Income: {percentages['Income']:.2f}%, Expenses: {percentages['Expenses']:.2f}%")
 
