@@ -49,7 +49,8 @@ func.print_monthly_balance(result)
 # 8) Atvaizduokite per procentinę išraišką pamėnesiui pajamas ir išlaidas procentine išraiška.
 print()
 print("Part 8")
-percentages = func.calc_percentage_income_outcome(file_path)
-func.print_percentage_income_outcome(percentages)
+#func.print_income_and_expenses_percentages(file_path)
+income_by_month, outcome_by_month, total_income_by_month = func.calc_income_and_outcome(file_path)
+func.print_income_and_expenses_percentages(income_by_month, outcome_by_month, total_income_by_month)
 
 
